@@ -1,8 +1,7 @@
 export class Author {
     constructor(
-      public readonly id: string,
-      public readonly name: string,
-      public readonly bio?: string,
+      public id: number,
+      public name: string,
+      public bio?: string,
     ) {}
   }
-  

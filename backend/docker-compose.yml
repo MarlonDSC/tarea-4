@@ -1,51 +1,30 @@
 version: '3.8'
 
 services:
-  api:
+  app:
     build: .
-    image: localhost:8081/repository/docker-repo/api-project:1.0.0
     ports:
       - "3000:3000"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: yourpassword
+      MYSQL_DB: yourdatabase
     depends_on:
-      - mongo
-      - rabbitmq
-    environment:
-      - MONGO_URI=mongodb://marlon:2190835@mongo:27017/nest
-      - RABBITMQ_URI=amqp://marlon:2190835@rabbitmq:5672
-    networks:
-      - app-network
+      - mysql
 
-  mongo:
-    image: mongo
+  mysql:
+    image: mysql:5.7
     environment:
-      MONGO_INITDB_ROOT_USERNAME: marlon
-      MONGO_INITDB_ROOT_PASSWORD: 2190835
+      MYSQL_ROOT_PASSWORD: yourpassword
+      MYSQL_DATABASE: yourdatabase
+      MYSQL_USER: root
+      MYSQL_PASSWORD: yourpassword
     ports:
-      - "27017:27017"
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
 
-  rabbitmq:
-    image: rabbitmq:management
-    environment:
-      RABBITMQ_DEFAULT_USER: marlon
-      RABBITMQ_DEFAULT_PASS: 2190835
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "rabbitmqctl", "status"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-networks:
-  app-network:
-    driver: bridge
+volumes:
+  mysql_data:

@@ -1,55 +1,46 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Injectable, Inject } from '@nestjs/common';
 import { AuthorRepository } from '../../domain/repositories/author.repository.interface';
 import { Author } from '../../domain/models/author.model';
-import { Author as AuthorDocument } from '../../infrastructure/databases/schemas/author.schema';
+import { Connection } from 'mysql2/promise';
+import { ResultSetHeader } from 'mysql2';
 
 @Injectable()
 export class AuthorRepositoryImpl implements AuthorRepository {
-  constructor(@InjectModel(AuthorDocument.name) private authorModel: Model<AuthorDocument>) {}
+  constructor(@Inject('MYSQL_CONNECTION') private connection: Connection) {}
 
-  private toDomain(authorDocument: AuthorDocument): Author {
-    return new Author(
-      authorDocument._id.toString(),
-      authorDocument.name,
-      authorDocument.bio,
-    );
+  private toDomain(row: any): Author {
+    return new Author(row.id, row.name, row.bio);
   }
 
   async create(author: Author): Promise<Author> {
-    const newAuthor = new this.authorModel({
-      name: author.name,
-      bio: author.bio,
-    });
-    const savedAuthor = await newAuthor.save();
-    return this.toDomain(savedAuthor);
+    const [result] = await this.connection.execute<ResultSetHeader>(
+      'INSERT INTO authors (name, bio) VALUES (?, ?)',
+      [author.name, author.bio]
+    );
+    author.id = result.insertId;
+    return author;
   }
 
   async findAll(): Promise<Author[]> {
-    const authorDocuments = await this.authorModel.find().exec();
-    return authorDocuments.map(this.toDomain);
+    const [rows] = await this.connection.execute('SELECT * FROM authors');
+    return (rows as any[]).map(this.toDomain);
   }
 
   async findOne(id: string): Promise<Author> {
-    const authorDocument = await this.authorModel.findById(id).exec();
-    return authorDocument ? this.toDomain(authorDocument) : null;
+    const [rows] = await this.connection.execute('SELECT * FROM authors WHERE id = ?', [id]);
+    return (rows as any[]).length ? this.toDomain(rows[0]) : null;
   }
 
   async update(id: string, author: Author): Promise<Author> {
-    const updatedAuthor = await this.authorModel.findByIdAndUpdate(
-      id,
-      {
-        name: author.name,
-        bio: author.bio,
-      },
-      { new: true }
-    ).exec();
-    return updatedAuthor ? this.toDomain(updatedAuthor) : null;
+    await this.connection.execute(
+      'UPDATE authors SET name = ?, bio = ? WHERE id = ?',
+      [author.name, author.bio, id]
+    );
+    return author;
   }
 
   async delete(id: string): Promise<Author> {
-    const deletedAuthor = await this.authorModel.findByIdAndDelete(id).exec();
-    return deletedAuthor ? this.toDomain(deletedAuthor) : null;
+    const [rows] = await this.connection.execute('DELETE FROM authors WHERE id = ?', [id]);
+    return (rows as any[]).length ? this.toDomain(rows[0]) : null;
   }
 }

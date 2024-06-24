@@ -1,58 +1,46 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Inject, Injectable } from '@nestjs/common';
 import { BookRepository } from '../../domain/repositories/book.repository.interface';
 import { Book } from '../../domain/models/book.model';
-import { Book as BookDocument } from '../../infrastructure/databases/schemas/book.schema';
+import { Connection } from 'mysql2/promise';
+import { ResultSetHeader } from 'mysql2';
 
 @Injectable()
 export class BookRepositoryImpl implements BookRepository {
-  constructor(@InjectModel(BookDocument.name) private bookModel: Model<BookDocument>) {}
+  constructor(@Inject('MYSQL_CONNECTION') private connection: Connection) {}
 
-  private toDomain(bookDocument: BookDocument): Book {
-    return new Book(
-      bookDocument._id.toString(),
-      bookDocument.title,
-      bookDocument.authorId,
-      bookDocument.publishedDate,
-    );
+  private toDomain(row: any): Book {
+    return new Book(row.id, row.title, row.authorId, row.publishedDate);
   }
 
   async create(book: Book): Promise<Book> {
-    const newBook = new this.bookModel({
-      title: book.title,
-      authorId: book.authorId,
-      publishedDate: book.publishedDate,
-    });
-    const savedBook = await newBook.save();
-    return this.toDomain(savedBook);
+    const [result] = await this.connection.execute<ResultSetHeader>(
+      'INSERT INTO books (title, authorId, publishedDate) VALUES (?, ?, ?)',
+      [book.title, book.authorId, book.publishedDate]
+    );
+    book.id = result.insertId;
+    return book;
   }
 
   async findAll(): Promise<Book[]> {
-    const bookDocuments = await this.bookModel.find().exec();
-    return bookDocuments.map(this.toDomain);
+    const [rows] = await this.connection.execute('SELECT * FROM books');
+    return (rows as any[]).map(this.toDomain);
   }
 
   async findOne(id: string): Promise<Book> {
-    const bookDocument = await this.bookModel.findById(id).exec();
-    return bookDocument ? this.toDomain(bookDocument) : null;
+    const [rows] = await this.connection.execute('SELECT * FROM books WHERE id = ?', [id]);
+    return (rows as any[]).length ? this.toDomain(rows[0]) : null;
   }
 
   async update(id: string, book: Book): Promise<Book> {
-    const updatedBook = await this.bookModel.findByIdAndUpdate(
-      id,
-      {
-        title: book.title,
-        authorId: book.authorId,
-        publishedDate: book.publishedDate,
-      },
-      { new: true }
-    ).exec();
-    return updatedBook ? this.toDomain(updatedBook) : null;
+    await this.connection.execute(
+      'UPDATE books SET title = ?, authorId = ?, publishedDate = ? WHERE id = ?',
+      [book.title, book.authorId, book.publishedDate, id]
+    );
+    return book;
   }
 
   async delete(id: string): Promise<Book> {
-    const deletedBook = await this.bookModel.findByIdAndDelete(id).exec();
-    return deletedBook ? this.toDomain(deletedBook) : null;
+    const [rows] = await this.connection.execute('DELETE FROM books WHERE id = ?', [id]);
+    return (rows as any[]).length ? this.toDomain(rows[0]) : null;
   }
 }

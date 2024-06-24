@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: your-backend-image
+        env:
+        - name: MYSQL_HOST
+          value: "your-cloudsql-instance-ip"
+        - name: MYSQL_PORT
+          value: "3307"
+        - name: MYSQL_USER
+          value: "root"
+        - name: MYSQL_PASSWORD
+          value: "yourpassword"
+        - name: MYSQL_DB
+          value: "yourdatabase"
+        ports:
+        - containerPort: 3000
