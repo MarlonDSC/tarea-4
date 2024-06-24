@@ -11,7 +11,15 @@ import { jwtConfig } from './infrastructure/databases/config/jwt.config';
 import { AuthModule } from './infrastructure/modules/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MySQLProvider } from './providers/mysql.provider';
-import { BffModule } from './bff/bff.module';
+import { BffModule } from './infrastructure/modules/bff.module';
+import { AuthService } from './application/services/auth.service';
+import { BffService } from './application/services/bff.service';
+import { UserService } from './application/services/user.service';
+import { AuthController } from './adapters/controllers/auth.controller';
+import { BffController } from './adapters/controllers/bff.controller';
+import { DatabaseModule } from './infrastructure/databases/database.module';
+import { AuthorRepositoryImpl } from './adapters/repositories/author.repository';
+import { BookRepositoryImpl } from './adapters/repositories/book.repository';
 
 @Module({
   imports: [
@@ -23,7 +31,7 @@ import { BffModule } from './bff/bff.module';
       type: 'mysql',
       host: process.env.MYSQL_HOST,
       port: parseInt(process.env.MYSQL_PORT, 10),
-      username: process.env.MYSQL_USER,
+      username: 'root',
       password: process.env.MYSQL_PASSWORD,
       database: process.env.MYSQL_DB,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
@@ -42,8 +50,18 @@ import { BffModule } from './bff/bff.module';
     JwtModule.register(jwtConfig),
     AuthModule,
     BffModule,
+    DatabaseModule, // Add DatabaseModule here
   ],
-  controllers: [AuthorController, BookController],
-  providers: [AuthorService, BookService, MySQLProvider],
+  controllers: [AuthController, BffController, AuthorController, BookController],
+  providers: [
+    AuthService,
+    BffService,
+    AuthorService,
+    BookService,
+    UserService,
+    MySQLProvider,
+    { provide: 'AuthorRepository', useClass: AuthorRepositoryImpl }, // Provide AuthorRepository
+    { provide: 'BookRepository', useClass: BookRepositoryImpl }, // Provide BookRepository
+  ],
 })
 export class AppModule {}

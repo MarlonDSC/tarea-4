@@ -6,23 +6,26 @@ services:
     ports:
       - "3000:3000"
     environment:
-      MYSQL_HOST: mysql
-      MYSQL_PORT: 3306
-      MYSQL_USER: root
-      MYSQL_PASSWORD: yourpassword
-      MYSQL_DB: yourdatabase
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3307
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=marlon1234
+      - MYSQL_DB=marlon
     depends_on:
       - mysql
+    volumes:
+      - ./src:/usr/src/app/src
 
   mysql:
     image: mysql:5.7
     environment:
-      MYSQL_ROOT_PASSWORD: yourpassword
-      MYSQL_DATABASE: yourdatabase
-      MYSQL_USER: root
-      MYSQL_PASSWORD: yourpassword
+      - MYSQL_ROOT_PASSWORD=marlon1234
+      - MYSQL_DATABASE=marlon
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=marlon1234
+      - MYSQL_TCP_PORT=3307
     ports:
-      - "3307:3306"
+      - "3307:3307"
     volumes:
       - mysql_data:/var/lib/mysql
 
