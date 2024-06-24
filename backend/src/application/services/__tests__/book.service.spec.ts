@@ -6,17 +6,27 @@ import { Book } from '../../../domain/models/book.model';
 describe('BookService', () => {
   let service: BookService;
   let bookRepository: Partial<BookRepository>;
+  const mockDate = new Date('2024-06-24T22:13:07.432Z');
+
+  beforeAll(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(mockDate);
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
 
   beforeEach(async () => {
     bookRepository = {
-      create: jest.fn().mockResolvedValue(new Book(1, 'Book 1', '1', new Date())),
-      findOne: jest.fn().mockResolvedValue(new Book(1, 'Book 1', '1', new Date())),
+      create: jest.fn().mockResolvedValue(new Book(1, 'Book 1', '1', mockDate)),
+      findOne: jest.fn().mockResolvedValue(new Book(1, 'Book 1', '1', mockDate)),
       findAll: jest.fn().mockResolvedValue([
-        new Book(1, 'Book 1', '1', new Date()),
-        new Book(2, 'Book 2', '2', new Date()),
+        new Book(1, 'Book 1', '1', mockDate),
+        new Book(2, 'Book 2', '2', mockDate),
       ]),
-      update: jest.fn().mockResolvedValue(new Book(1, 'Updated Book', '1', new Date())),
-      delete: jest.fn().mockResolvedValue(new Book(1, 'Book 1', '1', new Date())),
+      update: jest.fn().mockResolvedValue(new Book(1, 'Updated Book', '1', mockDate)),
+      delete: jest.fn().mockResolvedValue(new Book(1, 'Book 1', '1', mockDate)),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -34,29 +44,29 @@ describe('BookService', () => {
   });
 
   it('should create a book', async () => {
-    const book = new Book(null, 'Book 1', '1', new Date());
+    const book = new Book(null, 'Book 1', '1', mockDate);
     const result = await service.create(book);
-    expect(result).toEqual(new Book(1, 'Book 1', '1', new Date()));
+    expect(result).toEqual(new Book(1, 'Book 1', '1', mockDate));
     expect(bookRepository.create).toHaveBeenCalledWith(book);
   });
 
   it('should return a book by id', async () => {
     const result = await service.findOne('1');
-    expect(result).toEqual(new Book(1, 'Book 1', '1', new Date()));
+    expect(result).toEqual(new Book(1, 'Book 1', '1', mockDate));
     expect(bookRepository.findOne).toHaveBeenCalledWith('1');
   });
 
   it('should return all books', async () => {
     const result = await service.findAll();
     expect(result).toEqual([
-      new Book(1, 'Book 1', '1', new Date()),
-      new Book(2, 'Book 2', '2', new Date()),
+      new Book(1, 'Book 1', '1', mockDate),
+      new Book(2, 'Book 2', '2', mockDate),
     ]);
     expect(bookRepository.findAll).toHaveBeenCalled();
   });
 
   it('should update a book', async () => {
-    const book = new Book(1, 'Updated Book', '1', new Date());
+    const book = new Book(1, 'Updated Book', '1', mockDate);
     const result = await service.update('1', book);
     expect(result).toEqual(book);
     expect(bookRepository.update).toHaveBeenCalledWith('1', book);
@@ -64,7 +74,7 @@ describe('BookService', () => {
 
   it('should delete a book', async () => {
     const result = await service.delete('1');
-    expect(result).toEqual(new Book(1, 'Book 1', '1', new Date()));
+    expect(result).toEqual(new Book(1, 'Book 1', '1', mockDate));
     expect(bookRepository.delete).toHaveBeenCalledWith('1');
   });
 });
