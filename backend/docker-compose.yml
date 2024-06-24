@@ -13,8 +13,12 @@ services:
       - MYSQL_DB=marlon
     depends_on:
       - mysql
+      - rabbitmq
     volumes:
       - ./src:/usr/src/app/src
+    networks:
+      - default
+      - rabbitmq_go_net
 
   mysql:
     image: mysql:5.7
@@ -28,6 +32,27 @@ services:
       - "3307:3307"
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - default
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      - RABBITMQ_URI=amqp://marlon:marlon1234@localhost:5672
+      - RABBITMQ_DEFAULT_USER=marlon
+      - RABBITMQ_DEFAULT_PASS=marlon1234
+    volumes:
+        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+        - rabbitmq_go_net
 
 volumes:
   mysql_data:
+
+networks:
+  rabbitmq_go_net:
