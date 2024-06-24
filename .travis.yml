@@ -9,17 +9,17 @@ branches:
   only:
     - master
 
-# before_install:
-#   - sudo apt-get update
-#   - sudo apt-get install -y apt-transport-https ca-certificates gnupg
-#   - echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-#   - curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-#   - sudo apt-get update && sudo apt-get install -y google-cloud-sdk
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y apt-transport-https ca-certificates gnupg
+  - echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+  - curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+  - sudo apt-get update && sudo apt-get install -y google-cloud-sdk
 
-# before_script:
-#   - gcloud auth activate-service-account --key-file=gcloud-service-key.json
-#   - gcloud config set project $GOOGLE_PROJECT_ID
-#   - gcloud config set compute/zone $GOOGLE_COMPUTE_ZONE
+before_script:
+  - gcloud auth activate-service-account --key-file=gcloud-service-key.json
+  - gcloud config set project $GOOGLE_PROJECT_ID
+  - gcloud config set compute/zone $GOOGLE_COMPUTE_ZONE
 
 jobs:
   include:
@@ -30,16 +30,16 @@ jobs:
         - npm install
         - npm test
 
-    # - stage: Backend Deployment
-    #   name: "Run Backend Deployment"
-    #   script:
-    #     - cd gcloud-test-backend
-    #     - gcloud builds submit --tag gcr.io/$GOOGLE_PROJECT_ID/$GCLOUD_REGISTRY_NAME
-    #     - gcloud run deploy $GCLOUD_SERVICE_NAME --image gcr.io/$GOOGLE_PROJECT_ID/$GCLOUD_REGISTRY_NAME --platform managed --region $GOOGLE_COMPUTE_REGION --allow-unauthenticated
+    - stage: Backend Deployment
+      name: "Run Backend Deployment"
+      script:
+        - cd gcloud-test-backend
+        - gcloud builds submit --tag gcr.io/$GOOGLE_PROJECT_ID/$GCLOUD_REGISTRY_NAME
+        - gcloud run deploy $GCLOUD_SERVICE_NAME --image gcr.io/$GOOGLE_PROJECT_ID/$GCLOUD_REGISTRY_NAME --platform managed --region $GOOGLE_COMPUTE_REGION --allow-unauthenticated
 
-    #   deploy:
-    #     provider: gcloud
-    #     project: $GOOGLE_PROJECT_ID
-    #     keyfile: gcloud-service-key.json
-    #     on:
-    #       branch: master
+      deploy:
+        provider: gcloud
+        project: $GOOGLE_PROJECT_ID
+        keyfile: gcloud-service-key.json
+        on:
+          branch: master
